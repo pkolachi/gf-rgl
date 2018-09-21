@@ -1054,11 +1054,16 @@ patHollowImp : (_,_ :Str) -> Gender => Number => Str =\xaf,xAf ->
       s2 : Str
       }; 
 
-    linVP : VP -> Str = \vp -> --used for the first dummy implementation of ComplVV --IL
-      vp.s ! Per3 Masc Sg ! VPPerf ++ vp.s2 ++
-        case vp.isPred of {
-          True  => vp.pred.s ! {g=Masc ; n=Sg} ! Acc ;
-          False => vp.obj.s } ;
+    -- For complements of VV.
+    -- TODO: does verbal complement agree with the noun
+    compVP : VP -> Comp = \vp -> ---- IL
+     { s = table {
+	aagr@{g=g ; n=n} => \\c =>
+	  vp.s ! Per3 g n ! VPImpf Ind  ---- IL guesswork + https://arabic.desert-sky.net/g_modals.html
+	  ++ vp.s2
+	  ++ vp.pred.s ! aagr ! Acc
+          ++ vp.obj.s }
+      } ;
 
     predV : Verb -> VP = \v ->
       { s = \\pgn,vf => 
@@ -1095,7 +1100,7 @@ patHollowImp : (_,_ :Str) -> Gender => Number => Str =\xaf,xAf ->
       };
 
     insertStr : Str -> VP -> VP = \str,vp -> vp **
-      { s2 = str };
+      { s2 = vp.s2 ++ str };
 
     kaan : {s : AAgr => Case => Str} -> VP = \xabar -> 
       insertPred xabar (predV (v1hollow {f = "ك"; c = "و" ; l = "ن"} u) );
