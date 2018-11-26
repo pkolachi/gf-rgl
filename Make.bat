@@ -29,12 +29,28 @@ goto Loop
 
 REM Try to determine install location
 if "%dest%"=="" (
-  REM TODO Separate paths with search path separator ; and pick first one
-  set dest=%GF_LIB_PATH%
+  REM Separate paths with search path separator ; and pick first one
+  for %%p in ("%GF_LIB_PATH:;=";"%") do (
+    set dest=%%~p
+    goto BreakLibPath
+  )
 )
+:BreakLibPath
+
+set DATA_DIR=..\gf-core\DATA_DIR
 if "%dest%"=="" (
-  REM TODO Look in ../gf-core/DATA=DIR
+  REM Look in already compiled GF folder
+  if exist %DATA_DIR% (
+    for /f "delims=" %%x in (%DATA_DIR%) do (
+      if not "%%x"=="" (
+        set dest=%%x\lib
+        goto BreakDataDir
+      )
+    )
+  )
 )
+:BreakDataDir
+
 if "%dest%"=="" (
   echo Unable to determine where to install the RGL. Please do one of the following:
   echo  - Pass the --dest=... flag to this script
