@@ -168,6 +168,7 @@ oper
     compoundA : A -> A ; -- force comparison with more/most
     simpleA   : A -> A ; -- force comparison with -er,-est
     irregAdv  : A -> Str -> A ;  -- adverb irreg, e.g. "fast"
+    invarA    : Str -> A ; -- adjective that does not vary in morphology
 
 --3 Two-place adjectives
 
@@ -454,9 +455,6 @@ mkInterj : Str -> Interj
 
   mkOrd : Str -> Ord = \x -> lin Ord { s = regGenitiveS x};
 
-  invarA : Str -> A ;
-  invarA a = mkAdjective a a a a ;
-
   mk2A a b = mkAdjective a a a b ;
   regA a = case a of {
     _ + ("a" | "e" | "i" | "o" | "u" | "y") + ? + _ + 
@@ -656,6 +654,8 @@ mkInterj : Str -> Interj
     mkA : (good,better,best,well : Str) -> A = \a,b,c,d ->
       mkAdjective a b c d
     } ;
+
+  invarA s = mkAdjective s s s s ;
 
   compoundA = compoundADeg ;
   simpleA a = 
