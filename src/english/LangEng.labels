@@ -16,14 +16,20 @@ ExistNPAdv,ExistNP {"is","are","am","was","were""been","be"} VERB cop head
 ExistNPAdv,ExistNP {"there"} PART expl head
 PossNP,PartNP {"of"} ADP case nmod
 
+-- morphological feature labels
 @Pron Nom Acc
 @N Sg SgGen Pl PlGen
 @V  Inf Pres PastPart PresPart Past
 @V2 Inf Pres PastPart PresPart Past
 @VS Inf Pres PastPart PresPart Past
-@Quant Sg Pl Sg Pl
+@Quant Sg Pl Sg Pl -- and many more
 @Det Nom Gen Acc
 @A Pos PosGen Comp CompGen Sup SupGen
+@"am" PresSg1
+@"is" PresSg3
+@"are" PresPl
+
+
 
 
 
