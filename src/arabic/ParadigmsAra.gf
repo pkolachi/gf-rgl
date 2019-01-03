@@ -448,7 +448,7 @@ resource ParadigmsAra = open
     \rootStr,vPerf,vImpf ->
     let root = mkRoot3 rootStr
      in case rootStr of {
-          _          + "ّ"   => v1geminate rootStr vPerf vImpf ;
+          f@? + c@?  + "ّ"   => v1geminate (f+c+c) vPerf vImpf ;
           ? + #hamza + #weak => v1doubleweak root ;
           ? + ?      + #weak => case vPerf of {
                                   i => v1defective_i root vImpf ;
@@ -521,30 +521,32 @@ resource ParadigmsAra = open
     \rootStr ->
     let {
       fcl = mkRoot3 rootStr ;
-      v7fun = v7geminate ; -- TODO add rest
-      } in lin V (v7fun fcl) ;
+      verb : Verb = case rootStr of {
+        f@? + c@? + "ّ" => v7geminate (f+c+c) ;
+        _               => v7sound fcl }
+      } in lin V verb ;
 
   v8 =
     \rootStr ->
     let {
-      rbT = mkRoot3 rootStr ;
-      v8fun = case rbT.f of {
-                ("و"|"ي"|"ّ") => v8assimilated ;
-                _ =>
-                  case rbT.c of {
-                        #weak => v8hollow ;
-                        _     => v8sound }}
-      } in lin V (v8fun rbT) ;
+      fcl = mkRoot3 rootStr ;
+      verb : Verb  = case rootStr of {
+          f@? + c@? + "ّ" => v8geminate (f+c+c) ; 
+          #weak + ? + ?   => v8assimilated fcl ;
+          ? + #weak + ?   => v8hollow fcl ;
+          _               => v8sound fcl }
+      } in lin V verb ;
 
   v10 =
     \rootStr ->
     let {
-      rbT = mkRoot3 rootStr ;
-      v10fun : Root3 -> Verb = case rootStr of {
-                ? + #weak + ? => v10hollow ;
-                ? + ? + #weak => v10defective ;
-                _             => v10sound }
-      } in lin V (v10fun rbT) ;
+      fcl = mkRoot3 rootStr ;
+      verb : Verb = case rootStr of {
+          f@? + c@? + "ّ" => v10geminate (f+c+c) ;
+          ? + #weak + ?   => v10hollow fcl ;
+          ? + ? + #weak   => v10defective fcl ;
+          _               => v10sound fcl }
+      } in lin V verb ;
 
   reflV v = lin V (ResAra.reflV v) ;
 
@@ -757,7 +759,7 @@ resource ParadigmsAra = open
 
   mkVS = overload {
     mkVS : V -> VS = \v -> lin VS (v ** {o = Subord; s2 = []}) ;
-    mkVS : V -> Str -> VS =  \v,s -> lin VS (v ** {o = Subord; s2 = s}) 
+    mkVS : V -> Str -> VS =  \v,s -> lin VS (v ** {o = Subord; s2 = s})
     } ;
   mkVQ v = lin VQ v ;
 
@@ -815,6 +817,6 @@ formV : (root : Str) -> VerbForm -> V = \s,f -> case f of {
    } ;
 
 param VerbForm =
-  FormI | FormII |  FormIII |  FormIV |  FormV |  FormVI | FormVII | FormVIII | FormX ;
+  FormI | FormII | FormIII | FormIV | FormV | FormVI | FormVII | FormVIII | FormX ;
 
 } ;
