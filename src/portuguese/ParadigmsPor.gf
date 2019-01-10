@@ -85,25 +85,20 @@ oper
 --2 Nouns
 
   regN : Str -> N ;
-  regN x = mkNomReg x ** {lock_N = <>} ;
+  regN x = lin N (mkNomReg x) ;
 
   femN  : N -> N ;
-  femN x = {s = x.s ; g = feminine ; lock_N = <>} ;
+  femN n = n ** {g = feminine} ;
 
   mascN : N -> N ;
-  mascN x = {s = x.s ; g = masculine ; lock_N = <>} ;
+  mascN n = n ** {g = masculine} ;
 
   mk2N : (bastão, bastões : Str) -> Gender -> N ;
-  mk2N x y g = mkNounIrreg x y g ** {lock_N = <>} ;
+  mk2N x y g = lin N (mkNounIrreg x y g) ;
 
-  --- [] update this docstring
   -- The regular function takes the singular form and the gender, and
-  -- computes the plural and the gender by a heuristic.  The heuristic
-  -- says that the gender is feminine for nouns ending with "a" or
-  -- "z", and masculine for all other words.  Nouns ending with "a",
-  -- "o", "e" have the plural with "s", those ending with "z" have
-  -- "ces" in plural; all other nouns have "es" as plural ending. The
-  -- accent is not dealt with.
+  -- computes the plural and the gender by a heuristic (see MorphoPor
+  -- for which heuristic).
   mkN = overload {
     -- predictable; "-a" for feminine, otherwise Masculine
     mkN : (luz : Str) -> N = regN ;
@@ -136,7 +131,7 @@ oper
 -- Relational nouns ("filha de x") need a case and a preposition.
 
   mkN2 : N -> Prep -> N2 ; -- relational noun with prepositio
-  mkN2 = \n,p -> n ** {lock_N2 = <> ; c2 = p} ;
+  mkN2 = \n,p -> lin N2 (n ** {c2 = p}) ;
 
 -- The most common cases are the genitive "de" and the dative "a",
 -- with the empty preposition.
@@ -150,7 +145,7 @@ oper
 -- Three-place relational nouns ("a conexão de x a y") need two
 -- prepositions.
   mkN3 : N -> Prep -> Prep -> N3 ; -- prepositions for two complements
-  mkN3 = \n,p,q -> n ** {lock_N3 = <> ; c2 = p ; c3 = q} ;
+  mkN3 = \n,p,q -> lin N3 (n ** {c2 = p ; c3 = q}) ;
 
 --3 Relational common noun phrases
 --
@@ -174,10 +169,10 @@ oper
     } ;
 
   mk2PN  : Str -> Gender -> PN ; -- Pilar
-  mk2PN x g = {s = x ; g = g} ** {lock_PN = <>} ;
+  mk2PN x g = lin PN {s = x ; g = g} ;
 
   mkPN = overload {
-    -- feminine for "-a"
+    -- feminine for "-a", else masculine
     mkPN : (Anna : Str) -> PN = regPN ;
     -- force gender
     mkPN : (Pilar : Str) -> Gender -> PN = mk2PN ;
@@ -187,27 +182,24 @@ oper
 
 --2 Adjectives
   compADeg : A -> A ;
-  compADeg a = lin A {
+  compADeg a = a ** {
     s = table {
       Posit => a.s ! Posit ;
       _ => \\f => "mais" ++  a.s ! Posit ! f
       } ;
-    isPre = a.isPre ;
-    copTyp = a.copTyp
     } ;
 
+  liftAdj : Adj -> A ;
+  liftAdj adj = compADeg (lin A {s = \\_ => adj.s ; isPre = False ; copTyp = serCopula}) ;
+
   regA : Str -> A ;
-  regA a = compADeg (lin A {s = \\_ => (mkAdjReg a).s ; isPre = False ; copTyp = serCopula}) ;
+  regA a = liftAdj (mkAdjReg a) ;
 
   mk2A : (único,unicamente : Str) -> A ;
-  mk2A adj adv = compADeg {s = \\_ => (mkAdj2 adj adv).s ; isPre = False ;
-                           copTyp = serCopula ;
-                           lock_A = <>} ;
+  mk2A adj adv = liftAdj (mkAdj2 adj adv) ;
 
   mk5A : (preto,preta,pretos,pretas,pretamente : Str) -> A ;
-  mk5A a b c d e = compADeg {s = \\_ => (mkAdj a b c d e).s ;
-                             isPre = False ; copTyp = serCopula ;
-                             lock_A = <>} ;
+  mk5A a b c d e = liftAdj (mkAdj a b c d e) ;
 
   adjCopula : A -> CopulaType -> A ;
   adjCopula a cop = a ** {copTyp = cop} ;
@@ -223,6 +215,9 @@ oper
     isPre = a.isPre ;
     copTyp = a.copTyp
     } ;
+
+  invarA : Str -> A ;
+  invarA a = liftAdj (adjBlu a) ;
 
   mkNonInflectA : A -> Str -> A ;
   mkNonInflectA = \blanco,hueso -> blanco ** {s = \\x,y => blanco.s ! x ! y ++ hueso } ;
