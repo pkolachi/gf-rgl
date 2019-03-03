@@ -40,6 +40,8 @@ resource ResPes = MorphoPes ** open Prelude,Predef in {
       animacy = Inanimate ;
       compl = []
       } ;
+    indeclNP : Str -> NP = \s ->
+      emptyNP ** {s = \\m => s} ;
 
     useN : Noun -> CN = \n -> n ** {
       hasAdj = False ;
@@ -56,8 +58,10 @@ resource ResPes = MorphoPes ** open Prelude,Predef in {
  --- Verb Phrase
  -----------------------
 param
+  VVType = NoVV | FullVV | DefVV ;
   VVForm = Indic | Subj ;
   VVTense = VVPres | VVPerf | VVPast ; -- VVPast Anteriority ???
+  TAnt = TA Tense Anteriority ;
 
 oper
 
@@ -77,11 +81,9 @@ oper
       comp  : Agr => Str; -- complements of a verb, agr for ReflVP "I/you see myself/yourself" and CompCN "I am human/we are humans"
       vComp : Agr => VVTense => Str; -- when a verb is used as a complement of an auxiliary verb. Unlike ‘comp’ or ‘obj’, this type of complement follows the auxiliary verb.
       obj   : Str ; -- object of a verb; so far only used for A ("paint it black")
-      subj  : VType ;
       ad    : Str ;
       embComp : Str ; -- when a declarative or interrogative sentence is used as a complement of a verb.
-      isVV  : Bool ; -- whether a VV has been added
-      isDef : Bool ; -- whether a the VV is defective
+      vvtype  : VVType ; -- no VV, fully inflecting VV or defective VV
       } ;
 
   showVPH = overload {
@@ -94,28 +96,32 @@ oper
                    ++ vp.prefix ++ vp.s ! vf
                    ++ vp.vComp ! agr ! ant ++ vp.embComp ;
 
+  -- A hack: we reuse the obj field for the VP complement in
+  -- SlashV2V and this is needed to get the right word order for complVV.
+  showVPHvv : VerbForm -> Agr -> VPH -> Str = \vf,agr,vp ->
+      vp.comp ! agr ++ vp.prefix ++ vp.s ! vf ++ vp.ad
+   ++ vp.obj ++ vp.vComp ! agr ! VVPres ++ vp.embComp ;
+
   Compl : Type = {s : Str ; ra : Str} ;
 
-  VPHSlash : Type = VPH ** {c2 : Compl} ;
+  VPHSlash : Type = VPH ** {
+    c2 : Compl ;        -- prep or ra for the complement
+    agrObj : Agr => Str -- used for SlashV2V
+    } ;
 
- param
-    TAnt = TA Tense Anteriority ;
-
-    VType = VIntrans | VTrans | VTransPost ; -- TODO: find out if needed
-
-oper
+  vs : Compl -> {c2 : Compl; agrObj : Agr => Str} = \c ->
+    {c2 = c ; agrObj = \\_ => []} ;
 
   predV : Verb -> VPH = \verb -> verb ** {
-    subj = VIntrans ;
     ad,
     obj,
     embComp = [];
-    isDef,isVV = False ;
+    vvtype = NoVV ;
     comp = \\_ => [] ;
     vComp = \\_,_ => [] } ;
 
-   predVc : (Verb ** {c2,c1 : Str}) -> VPHSlash = \verb ->
-    predV verb ** {c2 = {s = verb.c1 ; ra = []} } ;
+   predVc : (Verb ** {c2 : Compl}) -> VPHSlash = \verb ->
+    predV verb ** vs verb.c2 ;
 
 ---------------------
 -- VP complementation
@@ -133,8 +139,7 @@ oper
 
   insertVV : VV -> VPH -> VPH = \vv,vp -> predV vv ** {
     vComp = \\a,t => vp.vComp ! a ! t ++ complVV vv vp ! a ! t ;
-    isVV = True ;
-    isDef = vv.isDef ;
+    vvType = case vv.isDef of {True => DefVV ; _ => FullVV} ;
   } ;
 
   embComp : Str -> VPH -> VPH = \str,vp -> vp ** {
@@ -146,24 +151,26 @@ oper
     } ;
 
   complSlash : VPHSlash -> NP -> VPH = \vp,np -> vp ** {
-    comp = \\a => appComp vp.c2 (np.s ! Bare) ++ np.compl ++ vp.comp ! a
+    comp = \\a => appComp vp.c2 (np.s ! Bare)
+               ++ np.compl ++ vp.comp ! a ;
+    obj = vp.obj ++ vp.agrObj ! np.a -- "beg her to buy", buy agrees with her
   } ;
 
 ---- AR 14/9/2017 trying to fix isAux = True case by inserting conjThat
 ---- but don't know yet how False should be affect
   complVV : VV -> VPH -> (Agr => VVTense => Str) = \vv,vp ->
     \\agr,ant => if_then_Str vv.isAux conjThat [] ++
-      case <ant,vv.compl,vv.isDef> of {
-        -- Auxiliaries with full inflection: complement in subjunctive
-        <_,_,False>    => showVPH (VSubj Pos agr) agr vp ; --
-
+      case <ant,vv.isDef,vv.compl> of {
        -- Auxiliaries with defective inflection: complement inflects in tense
-        <VVPres,Subj,True>  => showVPH (VSubj Pos agr) agr vp ;
-        <VVPres,Indic,True> => showVPH (VAor Pos agr) agr vp ;
-        <VVPast,_,True>       => showVPH (VPast Pos agr) agr vp ;
+        <VVPast,True,_> => showVPHvv (VPast Pos agr) agr vp ;
 --        <VVPast Anter> => showVPH PerfStem agr vp ++ pluperfAux Pos agr ; -- TODO do we need this?
-        <VVPerf,_,True>       => showVPH PerfStem agr vp ++ subjAux Pos agr ;
-        _ => showVPH (VSubj Pos agr) agr vp ---- TODO more forms ?
+        <VVPerf,True,_> => showVPHvv PerfStem agr vp ++ subjAux Pos agr ;
+
+        -- Auxiliaries that take indicative (full or defective inflection)
+        <VVPres,_,Indic> => showVPHvv (VAor Pos agr) agr vp ;
+
+       -- Default: complement in subjunctive
+        _ => showVPHvv (VSubj Pos agr) agr vp ---- TODO more forms ?
     } ;
 
   insertAdV : Str -> VPH -> VPH = \ad,vp -> vp ** {
@@ -186,24 +193,24 @@ oper
       TA Pres Anter => vp.s ! VPerf pol agr ;
       TA Past Simul => vp.s ! VPast pol agr ;
       TA Past Anter =>
-         case vp.isDef of {
-           True  => vp.s ! ImpPrefix pol ++ vp.s ! VAor pol agr ;
-           False => vp.s ! PerfStem ++ pluperfAux pol agr } ;
+         case vp.vvtype of {
+           DefVV => vp.s ! ImpPrefix pol ++ vp.s ! VAor pol agr ;
+           _ => vp.s ! PerfStem ++ pluperfAux pol agr } ;
       TA Fut  Simul =>
-         case vp.isDef of {
-           True  => vp.s ! ImpPrefix pol ++ vp.s ! VAor pol agr ;
-           False => futAux pol agr ++ vp.s ! PastStem
+         case vp.vvtype of {
+           DefVV => vp.s ! ImpPrefix pol ++ vp.s ! VAor pol agr ;
+           _ => futAux pol agr ++ vp.s ! PastStem
          } ; -- PastStem is, despite the name, used for future too. /IL
       TA Fut  Anter =>
-         case vp.isDef of {
-           True  => vp.s ! VPerf pol agr ;
-           False => "خواسته" ++ pluperfAux pol agr ++ vp.s ! PastStem
+         case vp.vvtype of {
+           DefVV => vp.s ! VPerf pol agr ;
+           _ => "خواسته" ++ pluperfAux pol agr ++ vp.s ! PastStem
          } ; -- verb form need to be confirmed
       TA Cond Simul => vp.s ! VSubj pol agr ;
       TA Cond Anter =>
-         case vp.isDef of {
-           True  => vp.s ! VSubj pol agr ;
-           False => vp.s ! PerfStem ++ subjAux pol agr } -- verb form to be confirmed
+         case vp.vvtype of {
+           DefVV => vp.s ! VSubj pol agr ;
+           _ => vp.s ! PerfStem ++ subjAux pol agr } -- verb form to be confirmed
   } ;
 
   mkClause : NP -> VPH -> Clause = \np,vp ->
@@ -214,7 +221,7 @@ oper
     quest = table
               { ODir => [];
                 OQuest => "آیا" } ;
-    subj = np.s !  Bare ;
+    subj = np.s ! Bare ;
     vp = \\ta,p,ord =>
       let vps = clTable vp ! np.a ! ta ! p ;
           vvt = ta2vvt ta ;
@@ -238,7 +245,6 @@ oper
       VAor  p a => haveVerb.s ! VAor  Pos a ++ verb.s ! ImpPrefix p ++ verb.s ! VAor Pos a ;
       VPast p a => haveVerb.s ! VPast Pos a ++ verb.s ! ImpPrefix p ++ verb.s ! VPast Pos a ; -- negation in ImpPrefix
 	    _ => verb.s ! vh } ; -- TODO more forms
-    subj = VIntrans
     } ;
 
   IndefArticle : Str ;
