@@ -75,6 +75,11 @@ param
     | Pl3
     | Impers ; -- Verb agrees with Sg3, but needed for preposition contraction
 
+  AgreementPlus =
+    Unassigned -- Dummy value: shows that the slot for object hasn't been filled.
+  | IsPron Agreement  -- Any of Sg1 … Pl3 can be a pronoun.
+  | NotPronP3 ; -- Sg3 Gender and Pl3 can be pronouns or not.
+
   State = Definite | Indefinite ;
 
   NForm =
@@ -90,6 +95,9 @@ oper
                 _                 => Sg3 g } ;
   getNum : Agreement -> Number = \a ->
     case a of { Sg1|Sg2|Sg3 _ => Sg ; _ => Pl } ;
+
+  agr2agrplus : (isPron : Bool) -> Agreement -> AgreementPlus = \isPron,a ->
+    case isPron of {True => IsPron a ; False => NotPronP3} ;
 
 --------------------------------------------------------------------------------
 -- Adjectives
@@ -108,7 +116,7 @@ param
 -- Prepositions
 
 param
-  Preposition = u | ku | ka | la | noPrep ;
+  Preposition = u | ku | ka | la | noPrep | passive ;
   PrepCombination = ugu | uga | ula | kaga | kula | kala
                   | Single Preposition ;
 
@@ -168,5 +176,11 @@ param
 oper
   if_then_Pol : Polarity -> Str -> Str -> Str = \p,t,f ->
     case p of {Pos => t ; Neg => f } ;
+
+  forceAgr : Agreement -> (VForm=>Str) -> (VForm=>Str) = \agr,tbl -> table {
+    VPres asp _a pol => tbl ! VPres asp agr pol ;
+    VPast asp _a     => tbl ! VPast asp agr ;
+    x                => tbl ! x
+    } ;
 
 }
