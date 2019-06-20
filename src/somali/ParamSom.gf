@@ -60,7 +60,7 @@ oper
 -- Nouns
 
 param
-  Case = Nom | Abs | Gen ; -- | Voc exists for some words
+  Case = Nom | Abs ;
   Gender = Masc | Fem ;
   Vowel = vA | vE | vI | vO | vU | NA ; -- For vowel assimilation
   GenNum = SgMasc | SgFem | PlInv ; -- For Quant
@@ -87,7 +87,7 @@ param
     | Def Number Vowel -- Stems for definite and determinative suffixes
     -- Special forms only for fem. nouns ending in consonant.
     | Numerative  -- When modified by a number: either pl gen or sg abs
-    | NomSg | GenSg | GenPl ;
+    | NomSg ;
 
 oper
   getAgr : NForm -> Gender -> Agreement = \n,g ->
@@ -99,18 +99,39 @@ oper
   agr2agrplus : (isPron : Bool) -> Agreement -> AgreementPlus = \isPron,a ->
     case isPron of {True => IsPron a ; False => NotPronP3} ;
 
+  nf2state : {s:NForm=>Str} -> State=>Str = \ss -> table {
+    Definite => ss.s ! Def Sg vA ;
+    Indefinite => ss.s ! Indef Sg
+    } ;
+
+  gn2gennum : Gender -> Number -> GenNum = \g,n ->
+    case <g,n> of {
+      <Masc,Sg> => SgMasc ;
+      <Fem,Sg>  => SgFem ;
+      _ => PlInv } ;
+
+  nf2gennum : NForm -> Gender -> GenNum = \nf,g ->
+    gn2gennum g (getNum (getAgr nf g)) ;
+
+--------------------------------------------------------------------------------
+-- Numerals
+
+param
+
+  DForm = Unit | Ten ;
+
+  -- If need to optimise: can remove one multiple of 2, but harder to understand
+  -- CardOrdDFS = Odfs DForm | Cdfs DForm State ;
+  --
+  -- CardOrdState = Ost | Cst State ;
+
+  CardOrd = NOrd | NCard ;
+
 --------------------------------------------------------------------------------
 -- Adjectives
 
 param
   AForm = AF Number Case ; ---- TODO: past tense
-
---------------------------------------------------------------------------------
--- Numerals
-
--- TODO: is this necessary?
-param
-  CardOrd = NCard | NOrd ;
 
 --------------------------------------------------------------------------------
 -- Prepositions
