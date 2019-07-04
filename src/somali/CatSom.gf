@@ -16,29 +16,24 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
     Cl = ResSom.Clause ;
     ClSlash = ResSom.ClSlash ;
     SSlash  = ResSom.Sentence ; -- sentence missing NP; e.g. "she has looked at"
-    Imp     = { s : Str } ;   -- imperative             e.g. "look at this"
+    Imp     = SS ;              -- imperative             e.g. "look at this"
 
 --2 Questions and interrogatives
 
 -- Constructed in QuestionSom.
 
-    QCl = ResSom.Clause ;
+    QCl = ResSom.QClause ;
     IP = ResSom.NounPhrase ;
-    IComp = { s : Str } ; -- interrogative complement of copula  e.g. "where"
+    IComp = SS ;              -- interrogative complement of copula  e.g. "where"
     IDet = ResSom.Determiner ;  -- interrogative determiner            e.g. "how many"
     IQuant = ResSom.Quant ; -- interrogative quantifier            e.g. "which"
-
-
-
 
 --2 Relative clauses and pronouns
 
 -- Constructed in RelativeSom.
 
     RCl = ResSom.RClause ;
-    RP = { s : Str } ;
-
-
+    RP = SS ;
 
 --2 Verb phrases
 
@@ -80,8 +75,8 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
 
 -- Constructed in NumeralSom.
 
-    Card = {s : State => Str ; n : Number} ;
-    Numeral = {s : CardOrd => State => Str ; n : Number} ;
+    Card = BaseNum ;
+    Numeral = ResSom.Numeral ;
     Digits = {s : CardOrd => Str ; n : Number} ;
 
 
@@ -91,7 +86,7 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
 -- Constructed in StructuralSom.
     Conj = { s1,s2 : Str ; n : Number } ;
     Subj = { s : Str ; isPre : Bool } ; --ba+dut vs. dut+en
-    Prep = ResSom.Prep ** {c2 : Preposition} ;
+    Prep = ResSom.Prep ** {c2 : Preposition ; berri, sii, dhex : Str} ;
 
 
 
@@ -128,4 +123,5 @@ linref
     -- Cl = linCl ;
     VP = linVP ;
     CN = linCN ;
+    Prep = \prep -> prep.s ! Pl3 ++ prep.sii ++ prep.dhex ;
 }

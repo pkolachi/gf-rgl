@@ -1,12 +1,12 @@
 concrete QuestionSom of Question = CatSom ** open
-  ResSom, (VS=VerbSom), (NS=NounSom), (AS=AdverbSom) in {
+  Prelude, ResSom, (VS=VerbSom), (NS=NounSom), (AS=AdverbSom) in {
 
 -- A question can be formed from a clause ('yes-no question') or
 -- with an interrogative.
 
   lin
   -- : Cl -> QCl ;
-  -- QuestCl cl = ;
+  QuestCl cl = {s = cl.s ! True} ;
 
   -- : IP -> VP -> QCl ;
   -- QuestVP ip vp = ;
@@ -40,12 +40,12 @@ concrete QuestionSom of Question = CatSom ** open
 
 -- Interrogative adverbs can be formed prepositionally.
   -- : Prep -> IP -> IAdv ;     -- with whom
-  PrepIP = AS.PrepNP ;
+  PrepIP prep ip = let a = AS.PrepNP prep ip in a ** {s = a.berri} ;
 
 -- They can be modified with other adverbs.
 
   -- : IAdv -> Adv -> IAdv ;    -- where in Paris
-  AdvIAdv = AS.AdAdv ;
+  AdvIAdv iadv adv = iadv ** {s = iadv.s ++ adv.berri} ;
 
 -- Interrogative complements to copulas can be both adverbs and
 -- pronouns.

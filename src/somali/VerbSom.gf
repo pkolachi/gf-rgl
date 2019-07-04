@@ -9,11 +9,13 @@ lin
   UseV = ResSom.useV ;
 
   --  : V2 -> VP ; -- be loved
-  PassV2 = ResSom.passV2 ; 
-{-
-  -- : VV  -> VP -> VP ;
-  ComplVV vv vp =  ;
+  PassV2 = ResSom.passV2 ;
 
+  -- : VV  -> VP -> VP ;
+  ComplVV vv vp = useV vv ** {  -- check Sayeed p. 169
+    vComp = infVP vp
+    } ;
+{-
   -- : VS  -> S  -> VP ;
   ComplVS vs s = ;
 
@@ -74,16 +76,13 @@ lin
   ReflVP vps = ;
 -}
   -- : Comp -> VP ;
-  UseComp comp = UseCopula ** comp ** {
-    isPred = True
-    } ;
+  UseComp comp = UseCopula ** comp ;
 
   -- : VP -> Adv -> VP ;  -- sleep here
-  AdvVP vp adv = insertAdv adv vp ; ---- TODO: how about combining adverbs?
-
+  AdvVP = insertAdv ;
 
   -- : VPSlash -> Adv -> VPSlash ;  -- use (it) here
-  AdvVPSlash vps adv = insertAdv adv vps ;
+  AdvVPSlash = insertAdv ;
 
 {-
   -- : VP -> Adv -> VP ;  -- sleep , even though ...
@@ -99,7 +98,7 @@ lin
   -- : VP -> Prep -> VPSlash ;  -- live in (it)
   -- NB. We need possibly a MissingArg kind of solution here too
   -- VPSlashPrep vp prep = vp **
-  --   { c2 = case vp.c2 of { noPrep => prep.prep ;
+  --   { c2 = case vp.c2 of { NoPrep => prep.prep ;
   --                          x      => x }} ;
 
 
@@ -117,18 +116,27 @@ lin
   -- : AP  -> Comp ;
   CompAP ap = {
     comp = \\a => <[], ap.s ! AF (getNum a) Abs> ;
+    pred = Copula ;
     } ;
-{-
+
   -- : CN  -> Comp ;
-  CompCN cn = { } ;
+  CompCN cn = {
+    comp = \\a => <[], cn2str Sg Abs cn> ;
+    pred = NoCopula ;
+    } ;
 
   --  NP  -> Comp ;
-  CompNP np = {  } ;
+  CompNP np = {
+    comp = \\a => <[], np.s ! Abs> ;
+    pred = NoCopula ;
+    } ;
 
   -- : Adv  -> Comp ;
-  CompAdv adv = {  } ;
+  CompAdv adv = {
+    comp = \\a => <[], linAdv adv> ;
+    pred = Copula ;
+    } ;
 
--}
   -- : VP -- Copula alone;
   UseCopula = useV copula ;
 
