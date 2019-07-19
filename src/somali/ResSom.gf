@@ -136,6 +136,7 @@ oper
   BaseNP : Type = {
     a : Agreement ;
     isPron : Bool ;
+    empty : Str ;
     } ;
 
   NounPhrase : Type = BaseNP ** {s : Case => Str} ;
@@ -143,12 +144,14 @@ oper
   useN : Noun -> CNoun ** BaseNP = \n -> n **
     { mod = \\_,_ => [] ; hasMod = False ;
       a = Sg3 (gender n) ; isPron,isPoss = False ;
+      empty = [] ;
     } ;
 
   emptyNP : NounPhrase = {
     s = \\_ => [] ;
     a = Pl3 ;
-    isPron = False
+    isPron = False ;
+    empty = [] ;
     } ;
 
   impersNP : NounPhrase = emptyNP ** {
@@ -172,46 +175,55 @@ oper
     Sg1 => {
       s = table {Nom => "aan" ; Abs => "i"} ;
       a = Sg1 ; isPron = True ; sp = "aniga" ;
+      empty = [] ;
       poss = {s = quantTable "ayg" "ayd" ; short = quantTable "ay" ; sp = gnTable "ayg" "ayd" "uwayg"}
       } ;
     Sg2 => {
       s = table {Nom => "aad" ; Abs => "ku"} ;
       a = Sg2 ; isPron = True ; sp ="adiga" ;
+      empty = [] ;
       poss = {s = quantTable "aag" "aad" ; short = quantTable "aa" ; sp = gnTable "aag" "aad" "uwaag"}
       } ;
     Sg3 Masc => {
       s = table {Nom => "uu" ; Abs => []} ;
       a = Sg3 Masc ; isPron = True ; sp ="isaga" ;
+      empty = [] ;
       poss = {s, short = quantTable "iis" ; sp = gnTable "iis" "iis" "uwiis"}
       } ;
     Sg3 Fem => {
       s = table {Nom => "ay" ; Abs => []} ;
       a = Sg3 Fem ; isPron = True ; sp = "iyada" ;
+      empty = [] ;
       poss = {s, short = quantTable "eed" ; sp = gnTable "eed" "eed" "uweed"}
       } ;
     Pl1 Excl => {
       s = table {Nom => "aan" ; Abs => "na"} ;
       a = Pl1 Excl ; isPron = True ; sp ="annaga" ;
+      empty = [] ;
       poss = {s = quantTable "eenn" ; short = quantTable "een" ; sp = gnTable "eenn" "eenn" "uweenn"}
       } ;
     Pl1 Incl => {
       s = table {Nom => "aynu" ; Abs => "ina"} ;
       a = Pl1 Incl ; isPron = True ; sp ="innaga" ;
+      empty = [] ;
       poss = {s = quantTable "eenn" ; short = quantTable "een" ; sp = gnTable "eenn" "eenn" "uweenn"}
       } ;
     Pl2 => {
       s = table {Nom => "aad" ; Abs => "idin"} ;
       a =  Pl2 ; isPron = True ; sp ="idinka" ;
+      empty = [] ;
       poss = {s = quantTable "iinn" ; short = quantTable "iin" ; sp = gnTable "iinn" "iinn" "uwiinn"}
       } ;
     Pl3 => {
       s = table {Nom => "ay" ; Abs => []} ;
       a = Pl3 ; isPron = True ; sp = "iyaga" ;
+      empty = [] ;
       poss = {s, short = quantTable "ood" ; sp = gnTable "ood" "ood" "uwood"}
       } ;
     Impers => {
       s = table {Nom => "la" ; Abs => "??"} ;
       a = Impers ; isPron = True ; sp = "??" ;
+      empty = [] ;
       poss = {s, short = quantTable "??" ; sp = gnTable "??" "??" "??"}
       }
     } ;
@@ -639,6 +651,7 @@ oper
     obj2 : {s : Str ; a : AgreementPlus} ;
     secObj : Str ; -- if two overt pronoun objects
     vComp : Str ; -- VV complement
+    refl : Str ; -- reflexive is put here, if the verb has an obj2.
     miscAdv : Str ; -- dump for any other kind of adverb, that isn't
     } ;             -- in a closed class of particles or made with PrepNP.
 
@@ -647,7 +660,7 @@ oper
   useV : Verb -> VerbPhrase = \v -> v ** {
     comp = \\_ => <[],[]> ;
     pred = NoPred ;
-    vComp,berri,miscAdv = [] ;
+    vComp,berri,miscAdv,refl = [] ;
     c2 = P NoPrep ;
     c3 = NoPrep ;
     obj2 = {s = [] ; a = Unassigned} ;
@@ -658,27 +671,35 @@ oper
     c2 = P v2.c2
     } ;
 
-  passV2 : Verb2 -> VerbPhrase = \v2 -> useV v2 ** {
+  passV2 : Verb2 -> VerbPhrase = \v2 -> passVP (useV v2) ;
+
+  passVP : VerbPhrase -> VerbPhrase = \vp -> vp ** {
     c2 = Passive ;
-    c3 = v2.c2 ;
+    c3 = pp2prep vp.c2 ;
     } ;
 
   complSlash : VPSlash -> VerbPhrase = \vps ->  let np = vps.obj2 in vps ** {
     comp = \\agr => let cmp = vps.comp ! agr in
       {p1 = np.s ++ cmp.p1 ; -- if object is a noun, it will come before verb in the sentence.
                              -- if object is a pronoun, np.s is empty.
-       p2 = cmp.p2 ++ compl np.a vps} -- object combines with the preposition of the verb.
+       p2 = cmp.p2 ++ vps.refl ++ compl np.a vps} -- object combines with the preposition of the verb.
       } ;
 
   compl : AgreementPlus -> VerbPhrase -> Str = \a,vp ->
     let agr = case a of {IsPron x => x ; _ => Pl3} ;
      in prepCombTable ! agr ! combine vp.c2 vp.c3 ;
 
+  insertRefl : VPSlash -> VPSlash = \vps ->
+    case <vps.c2,vps.c3> of {
+            <P NoPrep,NoPrep> => vps ** {refl = "is"} ; -- not bound
+            _ => vps ** {refl = "is" ++ BIND}
+    } ;
+
   insertComp : VPSlash -> NounPhrase -> VerbPhrase = \vp,np ->
     let noun : Str = case <np.isPron,np.a> of {
           <False,_>          => np.s ! Abs ;
-        --  <True,(Sg3 _|Pl3)> => (pronTable ! np.a).sp ; -- uncomment if you want to add long object pronoun for 3rd person object
-          _ => [] } -- no long object for other pronouns
+        --  <True,(Sg3 _|Pl3)> => np.empty ++ (pronTable ! np.a).sp ; -- uncomment if you want to add long object pronoun for 3rd person object
+          _ => np.empty } -- no long object for other pronouns
     in case vp.obj2.a of {
       Unassigned =>
         vp ** {obj2 = {
@@ -760,7 +781,7 @@ oper
     } where {
         vp = case vps.c2 of {
                Passive => complSlash (insertComp vps np) ;
-                _      => complSlash vps } ;
+               _       => complSlash vps } ;
         subj = case vps.c2 of {Passive => impersNP ; _ => np} ;
       } ;
 
