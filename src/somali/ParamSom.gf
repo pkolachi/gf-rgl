@@ -52,7 +52,7 @@ oper
     } where {
         allomF : Str -> DefTA = \wiilka ->
           case wiilka of {
-                _ + "ta" => DA ; _ + "sha" => SHA ;
+                _ + "ta" => TA ; _ + "sha" => SHA ;
                 _ + "da" => DA ; _ + "dha" => DHA } ;
         allomM : Str -> DefKA = \wiilka ->
           case wiilka of {
@@ -154,7 +154,7 @@ oper
                 _  => Sg3 g } ;
 
   getNum : Agreement -> Number = \a ->
-    case a of { Sg1|Sg2|Sg3 _ => Sg ; _ => Pl } ;
+    case a of { Sg1|Sg2|Sg3 _|Impers => Sg ; _ => Pl } ;
 
   plAgr : Agreement -> Agreement = \agr ->
     case agr of { Sg1   => Pl1 Excl ;
@@ -175,7 +175,7 @@ oper
     Sg2_Prep => Sg2 ;
     Pl1_Prep i => Pl1 i ;
     Pl2_Prep   => Pl2 ;
-    _          => Pl3
+    _          => Sg3 Masc
   } ;
 
   isP3 = overload {
@@ -271,9 +271,13 @@ param
     | VPres Aspect VAgr Polarity
     | VNegPast Aspect
     | VPast Aspect VAgr
+    | VImp Number Polarity
 --    | VRelShort  -- "som är/har/…" TODO is this used in other verbs?
-    | VRel Gender -- Reduced present general in relative clauses
-    | VImp Number Polarity ;
+    | VRel Gender ; {- Sayeed p. 95-96 + ch 8
+                      Reduced present general in relative clauses;  as absolutive
+                      1/2SG/3SG M/2PL/3PL sugá (VRel Masc)
+                      3 SG F sugtá (VRel Fem)
+                      1PL sugná -- not yet in the grammar -}
 
   VAgr =
       Sg1_Sg3Masc

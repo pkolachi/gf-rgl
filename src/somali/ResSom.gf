@@ -13,13 +13,14 @@ oper
   Noun3 : Type = Noun ;
 
   CNoun : Type = Noun ** {
-    mod : Number => Case => Str ;
+    mod : State -- for conjunctions: oo for indef, ee for def
+       => Number => Case => Str ;
     hasMod : Bool ;
     isPoss : Bool -- to prevent impossible forms in ComplN2 with Ns that have short possessive, e.g. "father"
     } ;
 
   cn2str : Number -> Case -> CNoun -> Str = \n,c,cn ->
-    cn.s ! Indef n ++ cn.mod ! n ! c ;
+    cn.s ! Indef n ++ cn.mod ! Indefinite ! n ! c ;
 
   PNoun : Type = {s : Str ; a : Agreement} ;
 
@@ -154,23 +155,20 @@ oper
     False => np.s} ;
 
   useN : Noun -> CNoun ** BaseNP = \n -> n **
-    { mod = \\_,_ => [] ; hasMod = False ;
+    { mod = \\_,_,_ => [] ; hasMod = False ;
       a = Sg3 (gender n) ; isPron,isPoss = False ;
       empty = [] ; st = Indefinite
     } ;
 
   emptyNP : NounPhrase = {
     s = \\_ => [] ;
-    a = Pl3 ;
+    a = Sg3 Masc ;
     isPron = False ;
     empty = [] ;
     st = Indefinite
     } ;
 
-  impersNP : NounPhrase = emptyNP ** {
-    a = Impers ;
-    isPron = True
-    } ;
+  impersNP : NounPhrase = pronTable ! Impers ;
 
 --------------------------------------------------------------------------------
 -- Pronouns
@@ -234,7 +232,7 @@ oper
       poss = {s, short = quantTable "ood" ; sp = gnTable "ood" "ood" "uwood"}
       } ;
     Impers => {
-      s = table {Nom => "la" ; Abs => "la"} ;
+      s = \\_ => [] ; -- the string `la' comes from Passive (: PrepCombination)
       a = Impers ; isPron = True ; sp = \\_ => "" ;
       empty = [] ; st = Definite ;
       poss = {s, short = quantTable "??" ; sp = gnTable "??" "??" "??"}
@@ -772,10 +770,14 @@ oper
   mergeQCl : (Tense => Anteriority => Polarity => BaseCl) -> QClause = mergeSTM True ;
   mergeRCl : (Tense => Anteriority => Polarity => BaseCl) -> QClause = mergeSTM False ;
 
-  mergeSTM : Bool -> (Tense => Anteriority => Polarity => BaseCl) -> QClause = \includeSTM,b ->
-    {s = \\t,a,p => (b ! t ! a ! p).beforeSTM
-                  ++ if_then_Str includeSTM (b ! t ! a ! p).stm []
-                  ++ (b ! t ! a ! p).afterSTM
+  mergeSTM : Bool -> (Tense => Anteriority => Polarity => BaseCl) -> QClause = \includeSTM,bcl ->
+    {s = \\t,a,p => (bcl ! t ! a ! p).beforeSTM
+                  ++ case <includeSTM,p> of {
+                          <False,Pos> => [] ;
+                          <False,Neg> => "aan" ;
+                          <True>      => (bcl ! t ! a ! p).stm
+                     }
+                  ++ (bcl ! t ! a ! p).afterSTM
     } ;
 
   predVPSlash : NounPhrase -> VPSlash -> ClSlash = \np,vps ->
@@ -787,17 +789,19 @@ oper
   predVP : NounPhrase -> VerbPhrase -> Clause = \np,vps -> {
     s = \\cltyp,t,a,p =>
        let predRaw : {fin : Str ; inf : Str} = vf cltyp t a p subj.a vp ;
-           pred : {fin : Str ; inf : Str} = case <cltyp,p,vp.pred> of {
-              <Statement,Pos,NoCopula> => {fin,inf = []} ;
-              <_        ,  _,  Copula> => {fin = presCopula ! {agr=subj.a ; pol=p} ; inf=[]} ;
-              _                        => predRaw
+           pred : {fin : Str ; inf : Str} = case <cltyp,p,t,vp.pred,subj.a> of {
+              <Statement,Pos,Pres,NoCopula       ,Sg3 _|Pl3>
+                => {fin,inf = []} ; -- If the VP is formed with CompNP
+              <_        ,  _,Pres,NoCopula|Copula,        _> -- Comp* present tense
+                => {fin = presCopula ! {agr=subj.a ; pol=p} ; inf=[]} ;
+              _ => predRaw
            } ;
            subjnoun : Str = if_then_Str np.isPron np.empty (subj.s ! Nom) ;
            subjpron : Str = if_then_Str np.isPron (subj.s ! Nom) np.empty ;
            obj : {p1,p2 : Str} =
               let o : {p1,p2 : Str} = vp.comp ! subj.a ;
-                  bind : Str = case <isPassive vp,vp.obj2.a, vp.c2, vp.pred> of {
-                                 <False,P3_Prep,Single NoPrep,NoPred> => [] ;
+                  bind : Str = case <isPassive vp, vp.obj2.a, vp.c2> of {
+                                 <False,P3_Prep,Single NoPrep> => [] ;
                                  _                             => BIND } ;
               in case <cltyp,p> of {
                     <Statement,Neg> => {p2 = [] ; p1 = o.p1 ++ o.p2 ++ bind} ;
@@ -809,7 +813,7 @@ oper
                             p2 = if_then_Pol p subjpron []} ;
                 Question  => {p1 = "ma" ; p2 = []} ; -- TODO find out how negative questions work
                 Statement => case <p,vp.pred,subj.a> of {
-                               <Pos,Copula|NoCopula,Sg3 _|Impers> => {p1 = "waa" ; p2 = []} ;
+                               <Pos,Copula|NoCopula,Pl3|Sg3 _> => {p1 = "waa" ; p2 = []} ;
                                _ => stmarkerNoContr ! subj.a ! p }} ;
       in (wordOrder subjnoun subjpron stm obj pred vp) ;
     } where {
@@ -897,7 +901,7 @@ oper
         wo = wordOrder [] [] {p1,p2=[]} (vp'.comp ! pagr2agr vp.obj2.a) inf vp' ;
      in wo.beforeSTM ++ wo.afterSTM ;
 
-  linCN : CNoun -> Str = \cn -> cn.s ! NomSg ++ cn.mod ! Sg ! Abs ;
+  linCN : CNoun -> Str = \cn -> cn.s ! Indef Sg ++ cn.mod ! Indefinite ! Sg ! Abs ;
   linAdv : Adverb -> Str = \adv ->
      adv.berri
   ++ adv.sii

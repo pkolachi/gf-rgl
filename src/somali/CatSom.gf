@@ -9,7 +9,7 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
 
     S  = ResSom.Sentence ;
     QS = SS ;
-    RS = {s : Gender => Case => Str} ;
+    RS = {s : State => Gender => Case => Str} ;
     -- relative sentence. Tense and polarity fixed,
     -- but agreement may depend on the CN/NP it modifies.
 
@@ -122,4 +122,5 @@ linref
     VP = linVP VInf ;
     CN = linCN ;
     Prep = \prep -> prep.s ! P3_Prep ++ prep.sii ++ prep.dhex ;
+    S = \s -> linBaseCl (s.s ! False) ;
 }
