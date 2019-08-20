@@ -9,15 +9,15 @@ lin
   -- : RP -> VP -> RCl ;
   {- NB. this works because vfSubord only puts different forms from vfStatement
     in Pres,Simul,Pos. RelVP needs a third set of forms in Abs,Pres,Simul,Pos,
-    called "reduced present general" (Sayeed p. 95-96 + ch 8).
+    called "reduced present general" (Saeed p. 95-96 + ch 8).
     These forms are found in VRel in VP, and aren't chosen by predVP, so we put
     them in manually in RelVP.
   -}
-  RelVP rp vp = {s = \\g,c,t,a,p =>
+  RelVP rp vp = {s = \\gn,c,t,a,p =>
     let cls = predVPSlash impersNP vp ;
         rclSubord = mergeRCl (cls.s ! True) ;
         rclStatement = mergeRCl (cls.s ! False) ;
-    in rp.s ++ case <g,c,t,a,p> of {
+    in rp.s ++ case <gn,c,t,a,p> of {
         <g,Abs,Pres,Simul,Pos> => linVP (VRel g) vp ; -- reduced present only in absolutive
         <_,Nom,Pres,Simul,Pos> => rclStatement.s ! t ! a ! p ; -- the usual forms, not subordinate
         _ => rclSubord.s ! t ! a ! p } -- the rest is Subord because of negation.

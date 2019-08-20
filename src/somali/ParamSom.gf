@@ -9,6 +9,8 @@ oper
   vstar : pattern Str = #("a" | "e" | "i" | "o" | "u" | "y" | "w") ; -- semivowels included
   vv : pattern Str = #("aa" | "ee" | "ii" | "oo" | "uu") ;
   c : pattern Str = #("m"|"n"|"p"|"b"|"t"|"d"|"k"|"g"|"f"|"v"
+                      |"s"|"h"|"l"|"j"|"r"|"z"|"c"|"q");
+  cstar : pattern Str = #("m"|"n"|"p"|"b"|"t"|"d"|"k"|"g"|"f"|"v" -- semivowels included
                       |"s"|"h"|"l"|"j"|"r"|"z"|"c"|"q"|"y"|"w");
   lmnr : pattern Str = #("l" | "m" | "n" | "r") ;
   kpt : pattern Str = #("k" | "p" | "t") ;
@@ -188,8 +190,17 @@ oper
 
   gender : {gda : GenderDefArt} -> Gender = \n ->
     case n.gda of {FM _ _ => Fem ; _ => Masc} ;
-  npgender : {a : Agreement} -> Gender = \n ->
-    case n.a of {Sg3 Fem => Fem ; _ => Masc} ;
+
+  gennum : {gda : GenderDefArt} -> Number -> GenNum = \gda,n ->
+    case n of {Pl => PlInv ; Sg => 
+      case gda.gda of {FM _ _ => SgFem ; _ => SgMasc}
+    } ;
+
+  npgennum : {a : Agreement} -> GenNum = \n ->
+    case n.a of {
+      Sg2|Sg3 Fem  => SgFem ;
+      Sg1|Sg3 Masc => SgMasc ;
+      _ => PlInv } ;
 
 --------------------------------------------------------------------------------
 -- Numerals
@@ -242,7 +253,7 @@ oper
 --------------------------------------------------------------------------------
 -- Verbs
 
--- Sayeed p. 84-85
+-- Saeed p. 84-85
 -- Tense: Past/Present/Future
 -- Aspect: Simple/Progressive/Habitual
 -- Mood: Declarative/Imperative/Conditional/Optative/Potential
@@ -272,12 +283,12 @@ param
     | VNegPast Aspect
     | VPast Aspect VAgr
     | VImp Number Polarity
---    | VRelShort  -- "som är/har/…" TODO is this used in other verbs?
-    | VRel Gender ; {- Sayeed p. 95-96 + ch 8
-                      Reduced present general in relative clauses;  as absolutive
-                      1/2SG/3SG M/2PL/3PL sugá (VRel Masc)
-                      3 SG F sugtá (VRel Fem)
-                      1PL sugná -- not yet in the grammar -}
+    | VRel GenNum {- Saeed p. 95-96 + ch 8
+                     Reduced present general in relative clauses;  as absolutive
+                      1/2SG/3SG M/2PL/3PL suga (VRel MascSg)
+                      3 SG F sugta (VRel FemSg)
+                      1PL sugna (VRel PlInv) -}
+    | VNegCond GenNum ;
 
   VAgr =
       Sg1_Sg3Masc
