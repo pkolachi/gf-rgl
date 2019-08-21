@@ -33,7 +33,7 @@ lin big_A = mkA "weyn" ;
 -- lin bike_N = mkN "" ;
 lin bird_N = mkN "shimbir" fem ;
 -- lin bite_V2 = mkV2 "" ;
--- lin black_A = mkA "" ;
+lin black_A = mkA "madow" ;
 -- lin blood_N = mkN "" ;
 -- lin blow_V = mkV "" ;
 -- lin blue_A = mkA "" ;
@@ -41,7 +41,7 @@ lin bird_N = mkN "shimbir" fem ;
 -- lin bone_N = mkN "" ;
 -- lin boot_N = mkN "" ;
 -- lin boss_N = mkN "" ;
-lin book_N = (mk2N "buug" "buugaag") ** {pl = F TA} ;
+lin book_N = (mk2N "buug" "buugaag") ** {gda = MF GA TA} ;
 lin boy_N = mk2N "wiil" "wiilal" ;
 lin bread_N = mkN "rooti" ; --masc/fem
 -- lin break_V2 = mkV2 "" ;
@@ -52,7 +52,7 @@ lin bread_N = mkN "rooti" ; --masc/fem
 -- lin brown_A = mkA "" ;
 -- lin burn_V = mkV "" ;
 -- lin butter_N = mkN "" ;
-lin buy_V2 = mkV2 "iibsa" ;
+lin buy_V2 = mkV2 "iibso" ;
 
 ----
 -- C
@@ -222,7 +222,7 @@ lin language_N = mkN "af" ;
 ----
 -- M
 
-lin man_N = mkN "nin" ;
+lin man_N = (mk2N "nin" "niman") ** {gda = MM KA KA} ;
 -- lin married_A2 = mkA "" ;
 lin meat_N = mkN "hilib" "hilbo" masc ;
 -- lin milk_N = mkN "" ;
@@ -397,7 +397,7 @@ lin wait_V2 = mkV2 "sug" ;
 -- lin watch_V2 = mkV2 "" ;
 lin water_N = mkNoun "biyo" "biyaha" "biyo" "biyaha" Masc ; -- ?? gender
 -- lin wet_A = mkA "" ;
--- lin white_A = mkA "" ;
+lin white_A = mkA "cad" ;
 -- lin wide_A = mkA "" ;
 -- lin wife_N = mkN "" ;
 -- lin win_V2 = mkV2 "" ;

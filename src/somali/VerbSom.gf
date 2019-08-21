@@ -15,7 +15,7 @@ lin
   ReflVP = ResSom.insertRefl ;
 
   -- : VV  -> VP -> VP ;
-  ComplVV vv vp = vp ** {  -- check Sayeed p. 169
+  ComplVV vv vp = vp ** {  -- check Saeed p. 169
     s = vv.s ;
     vComp = vp.vComp ++ vp.s ! VInf ;
     pred = NoPred ;
@@ -40,7 +40,7 @@ lin
   -- : V3 -> NP -> VPSlash ; -- give it (to her)
   -- : V3 -> NP -> VPSlash ; -- give (it) to her
   Slash2V3,
-  Slash3V3 = \v3 -> insertComp (useVc v3) ;
+  Slash3V3 = \v3 -> insertComp (useVc3 v3) ;
 {-
   -- : V2V -> VP -> VPSlash ;  -- beg (her) to go
   SlashV2V v2v vp = ;
@@ -137,6 +137,6 @@ lin
     } ;
 
   -- : VP -- Copula alone;
-  UseCopula = useV copula ;
+  UseCopula = useV copula ** {pred=Copula} ;
 
 }

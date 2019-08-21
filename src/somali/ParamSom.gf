@@ -9,6 +9,8 @@ oper
   vstar : pattern Str = #("a" | "e" | "i" | "o" | "u" | "y" | "w") ; -- semivowels included
   vv : pattern Str = #("aa" | "ee" | "ii" | "oo" | "uu") ;
   c : pattern Str = #("m"|"n"|"p"|"b"|"t"|"d"|"k"|"g"|"f"|"v"
+                      |"s"|"h"|"l"|"j"|"r"|"z"|"c"|"q");
+  cstar : pattern Str = #("m"|"n"|"p"|"b"|"t"|"d"|"k"|"g"|"f"|"v" -- semivowels included
                       |"s"|"h"|"l"|"j"|"r"|"z"|"c"|"q"|"y"|"w");
   lmnr : pattern Str = #("l" | "m" | "n" | "r") ;
   kpt : pattern Str = #("k" | "p" | "t") ;
@@ -52,7 +54,7 @@ oper
     } where {
         allomF : Str -> DefTA = \wiilka ->
           case wiilka of {
-                _ + "ta" => DA ; _ + "sha" => SHA ;
+                _ + "ta" => TA ; _ + "sha" => SHA ;
                 _ + "da" => DA ; _ + "dha" => DHA } ;
         allomM : Str -> DefKA = \wiilka ->
           case wiilka of {
@@ -141,7 +143,7 @@ param
     | Sg2_Prep
     | Pl1_Prep Inclusion
     | Pl2_Prep
-    | Impers_Prep
+    | Reflexive_Prep
     | P3_Prep ;
 
   State = Definite | Indefinite ;
@@ -154,16 +156,29 @@ oper
                 _  => Sg3 g } ;
 
   getNum : Agreement -> Number = \a ->
-    case a of { Sg1|Sg2|Sg3 _ => Sg ; _ => Pl } ;
+    case a of { Sg1|Sg2|Sg3 _|Impers => Sg ; _ => Pl } ;
+
+  plAgr : Agreement -> Agreement = \agr ->
+    case agr of { Sg1   => Pl1 Excl ;
+                  Sg2   => Pl2 ;
+                  Sg3 _ => Pl3 ;
+                  agr   => agr } ;
 
   agr2pagr : Agreement -> PrepAgr = \a -> case a of {
     Sg1 => Sg1_Prep ;
     Sg2 => Sg2_Prep ;
-    Impers => Impers_Prep ;
     Pl1 i => Pl1_Prep i ;
     Pl2 => Pl2_Prep ;
     _   => P3_Prep
     } ;
+
+  pagr2agr : PrepAgr -> Agreement = \a -> case a of {
+    Sg1_Prep => Sg1 ;
+    Sg2_Prep => Sg2 ;
+    Pl1_Prep i => Pl1 i ;
+    Pl2_Prep   => Pl2 ;
+    _          => Sg3 Masc
+  } ;
 
   isP3 = overload {
     isP3 : Agreement -> Bool = \agr ->
@@ -172,8 +187,21 @@ oper
       case agr of {P3_Prep => True ; _ => False} ;
   } ;
 
+
   gender : {gda : GenderDefArt} -> Gender = \n ->
     case n.gda of {FM _ _ => Fem ; _ => Masc} ;
+
+  gennum : {gda : GenderDefArt} -> Number -> GenNum = \gda,n ->
+    case n of {Pl => PlInv ; Sg => 
+      case gda.gda of {FM _ _ => SgFem ; _ => SgMasc}
+    } ;
+
+  npgennum : {a : Agreement} -> GenNum = \n ->
+    case n.a of {
+      Sg2|Sg3 Fem  => SgFem ;
+      Sg1|Sg3 Masc => SgMasc ;
+      _ => PlInv } ;
+
 --------------------------------------------------------------------------------
 -- Numerals
 
@@ -193,45 +221,39 @@ param
 
 param
   Preposition = U | Ku | Ka | La | NoPrep ;
-  PrepositionPlus = P Preposition
-                  | Passive ; -- Hack: RGL only supports V2s as passive, so I can reuse V2's preposition slot for passives as well, and save >200 parameters. (Don't ask.)
 
   PrepCombination = Ugu | Uga | Ula | Kaga | Kula | Kala
-                  | Lagu  -- laygu, lagugu, nalagu, laydinku
-                  | Laga  -- layga, lagaa, nalaga, laydinka
-               -- | TODO rest of combinations with impersonal-la
-               -- | TODO incorporate reflexive too
-                  | Single PrepositionPlus ;
+                  | Passive | Lagu | Laga | Loo | Lala -- TODO all combinations with impersonal la
+                  | Single Preposition ;
 
 oper
-  combine : PrepositionPlus -> Preposition -> PrepCombination = \p1,p2 ->
-    let oneWay : PrepositionPlus => Preposition => PrepCombination =
-          \\x,y => case <x,y> of {
-              <Passive,NoPrep> => Single Passive ;
-              <Passive,Ku> => Lagu ;
-              <Passive,Ka> => Laga ;
-              <Passive,p> => Single (P p) ; -- TODO rest of combinations
-              <P z,_> => case <z,y> of {
-                      <U,U|Ku> => Ugu ;
-                      <U,Ka>   => Uga ;
-                      <U,La>   => Ula ;
-                      <Ku|Ka,
-                        Ku|Ka> => Kaga ;
-                      <Ku,La>  => Kula ;
-                      <Ka,La>  => Kala ;
-                      <NoPrep,p> => Single (P p) ;
-                      <p,NoPrep> => Single x ;
-                      <p,_> => Single x }} -- for trying both ways
-    in case oneWay ! P p2 ! (pp2prep p1) of {
-              Single _ => oneWay ! p1 ! p2 ;
-              z        => z } ;
+  combine : Preposition -> Preposition -> PrepCombination = \p1,p2 ->
+    let oneWay : Preposition => Preposition => PrepCombination = \\x,y =>
+        case <x,y> of {
+          <U,U|Ku> => Ugu ;
+          <U,Ka>   => Uga ;
+          <U,La>   => Ula ;
+          <Ku|Ka,
+          Ku|Ka> => Kaga ;
+          <Ku,La>  => Kula ;
+          <Ka,La>  => Kala ;
+          <NoPrep,p> => Single p ;
+          <p,NoPrep> => Single x ;
+          <p,_> => Single x } -- for trying both ways
+     in case oneWay ! p2 ! p1 of {
+          Single _ => oneWay ! p1 ! p2 ;
+          z        => z } ;
 
-  pp2prep : PrepositionPlus -> Preposition = \pp ->
-    case pp of {P p => p ; _ => NoPrep} ;
+  isPassive : {c2 : PrepCombination} -> Bool = \vp ->
+    case vp.c2 of {
+      Passive | Lagu | Laga | Loo | Lala => True ;
+      _ => False
+    } ;
+
 --------------------------------------------------------------------------------
 -- Verbs
 
--- Sayeed p. 84-85
+-- Saeed p. 84-85
 -- Tense: Past/Present/Future
 -- Aspect: Simple/Progressive/Habitual
 -- Mood: Declarative/Imperative/Conditional/Optative/Potential
@@ -260,8 +282,13 @@ param
     | VPres Aspect VAgr Polarity
     | VNegPast Aspect
     | VPast Aspect VAgr
-    | VRel -- "som är/har/…" TODO is this used in other verbs?
-    | VImp Number Polarity ;
+    | VImp Number Polarity
+    | VRel GenNum {- Saeed p. 95-96 + ch 8
+                     Reduced present general in relative clauses;  as absolutive
+                      1/2SG/3SG M/2PL/3PL suga (VRel MascSg)
+                      3 SG F sugta (VRel FemSg)
+                      1PL sugna (VRel PlInv) -}
+    | VNegCond GenNum ;
 
   VAgr =
       Sg1_Sg3Masc
@@ -287,4 +314,12 @@ oper
     Sg2|Sg3 Fem => Sg2_Sg3Fem ;
     Pl1 _ => Pl1_ ; Pl2 => Pl2_ ; Pl3 => Pl3_
   } ;
+
+--------------------------------------------------------------------------------
+-- Clauses
+
+param
+
+  ClType = Statement | Question | Subord ;
+
 }

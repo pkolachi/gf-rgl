@@ -38,8 +38,8 @@ lin there_Adv = ss "" ;
 -------
 -- Conj
 
-lin and_Conj = {s1 = "oo" ; s2 = [] ; n = Pl} ;
-lin or_Conj = {s1 = "ama" ; s2 = [] ; n = Sg} ; -- mise with interrogatives
+lin and_Conj = {s2 = table {Definite => "ee" ; Indefinite => "oo"} ; s1 = [] ; n = Pl} ;
+lin or_Conj = {s2 = \\_ => "ama" ; s1 = [] ; n = Sg} ; -- mise with interrogatives
 -- lin if_then_Conj = mkConj
 -- lin both7and_DConj = mkConj "" "" pl ;
 -- lin either7or_DConj = mkConj "" "" pl ;
@@ -118,7 +118,7 @@ lin with_Prep = mkPrep la ;
 -- Pron
 
 -- Pronouns are closed class, no constructor in ParadigmsSom.
-    it_Pron = he_Pron ** {s = \\_ => [] ; sp = []} ; -- TODO check should there be Sg3 Neutr?
+    it_Pron = he_Pron ** {s = \\_ => [] ; sp = \\_ => [] ; a = Impers} ;
     i_Pron = pronTable ! Sg1 ;
     youPol_Pron,
     youSg_Pron = pronTable ! Sg2 ;
@@ -133,20 +133,18 @@ lin whatSg_IP = ;
 lin whoPl_IP = ;
 lin whoSg_IP = ;
 
-
-
+-}
 
 -------
 -- Subj
 
-lin although_Subj = mkSubj "" False ;
-lin because_Subj  = mkSubj "" False ;
-lin if_Subj = mkSubj "" True ;
-lin that_Subj = mkSubj "" False ;
-lin when_Subj = mkSubj "" False ;
+-- lin although_Subj = mkSubj "" False ;
+-- lin because_Subj  = mkSubj "" False ;
+-- lin if_Subj = mkSubj "" True ;
+lin that_Subj = {s = "in"} ;
+-- lin when_Subj = mkSubj "" False ;
 
 
--}
 ------
 -- Utt
 

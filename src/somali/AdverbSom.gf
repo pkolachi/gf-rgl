@@ -1,4 +1,4 @@
-concrete AdverbSom of Adverb = CatSom ** open ResSom, ParamSom, Prelude in {
+concrete AdverbSom of Adverb = CatSom ** open ResSom, ParamSom, ParadigmsSom, Prelude in {
 
 lin
 
@@ -24,15 +24,11 @@ lin
 -- Subordinate clauses can function as adverbs.
 
     -- : Subj -> S -> Adv ;
---  SubjS subj s = {} ;
+  SubjS subj s = let subs = s.s ! True in
+    mkAdv (subs.beforeSTM ++ subj.s ++ subs.stm ++ subs.afterSTM) ;
 
 -- Comparison adverbs also work as numeral adverbs.
 
     --AdnCAdv : CAdv -> AdN ;                  -- less (than five)
     --AdnCAdv cadv = {s = } ;
 } ;
-
-{-
-gt PrepNP in_Prep (DetCN (DetQuant DefArt ?) (UseN ?) | l -bind
-gt PrepNP from_Prep (DetCN (DetQuant DefArt ?) (UseN ?)) | l -bind
--}

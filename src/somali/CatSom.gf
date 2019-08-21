@@ -8,8 +8,8 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
 -- Constructed in SentenceSom, and also in IdiomSom
 
     S  = ResSom.Sentence ;
-    QS = ResSom.Sentence ;
-    RS = { s : Agreement => Str } ;
+    QS = SS ;
+    RS = {s : State => GenNum => Case => Str} ;
     -- relative sentence. Tense and polarity fixed,
     -- but agreement may depend on the CN/NP it modifies.
 
@@ -28,9 +28,7 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
     IDet = ResSom.Determiner ;  -- interrogative determiner            e.g. "how many"
     IQuant = ResSom.Quant ; -- interrogative quantifier            e.g. "which"
 
---2 Relative clauses and pronouns
-
--- Constructed in RelativeSom.
+--2 Subord clauses and pronouns
 
     RCl = ResSom.RClause ;
     RP = SS ;
@@ -84,8 +82,8 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
 --2 Structural words
 
 -- Constructed in StructuralSom.
-    Conj = { s1,s2 : Str ; n : Number } ;
-    Subj = { s : Str ; isPre : Bool } ; --ba+dut vs. dut+en
+    Conj = {s2 : State => Str ; s1 : Str ; n : Number } ;
+    Subj = SS ;
     Prep = ResSom.Prep ** {c2 : Preposition ; berri, sii, dhex : Str} ;
 
 
@@ -98,7 +96,7 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
     V,
     -- TODO: eventually proper lincats
     VV,    -- verb-phrase-complement verb         e.g. "want"
-    VS,    -- sentence-complement verb            e.g. "claim"
+    VS,    -- sentence-complement verb            e.g. "claim" -- TODO: VPs that have VS use waxa as stm? see Nilsson p. 68
     VQ,    -- question-complement verb            e.g. "wonder"
     VA,    -- adjective-complement verb           e.g. "look"
     V2V,   -- verb with NP and V complement       e.g. "cause"
@@ -121,7 +119,8 @@ concrete CatSom of Cat = CommonX - [Adv] ** open ResSom, Prelude in {
 
 linref
     -- Cl = linCl ;
-    VP = linVP ;
+    VP = linVP VInf ;
     CN = linCN ;
     Prep = \prep -> prep.s ! P3_Prep ++ prep.sii ++ prep.dhex ;
+    S = \s -> linBaseCl (s.s ! False) ;
 }
