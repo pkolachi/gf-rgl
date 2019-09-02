@@ -23,12 +23,11 @@ concrete NounSom of Noun = CatSom ** open ResSom, Prelude in {
                 -- If cn has modifier, Nom ending attaches to the modifier
                 <_,Nom,True,_,_> => {nf=Def det.n ; c=Abs} ;
 
-                -- Definite
-                <_,_,False,Definite,n> => {nf=Def n ; c=c} ;
+                -- a Det with st=Indefinite uses Indef forms
+                <_,_,_,Indefinite,n>  => {nf=Indef n ; c=c} ;
 
-                <_,_,False,Indefinite,n>  => {nf=Indef n ; c=c} ;
-
-                _ => {nf=Def det.n ; c=c} -- TODO check
+                -- All other determiners use the definite stem
+                _ => {nf=Def det.n ; c=c}
              } ;
           art = gda2da cn.gda ! det.n ;
           num = case det.isNum of {True => Sg ; _ => det.n} ;
@@ -57,10 +56,20 @@ concrete NounSom of Noun = CatSom ** open ResSom, Prelude in {
   UsePron pron = pron ** {st = Definite} ;
 
   -- : Predet -> NP -> NP ; -- only the man
-  PredetNP predet np = np ** {
-    s = \\c => predet.s ++ np.s ! c ---- ?
-    } ;
-
+  PredetNP predet np = 
+    let qnt = PossPron (pronTable ! np.a) ;
+        det = qnt.shortPoss ! predet.da ;
+         predetS : Str = case predet.isPoss of {
+          True => glue predet.s det ;
+          False => predet.s  
+        } ;
+     in np ** {
+          s = \\c => 
+            case <np.isPron,predet.isPoss> of {
+              <True,True> => np.empty ++ predetS ;
+              _ => np.s ! c ++ predetS} ;
+          isPron = False ; -- NP it loses its pronoun status when Predet is added
+        } ;
 
 -- A noun phrase can also be postmodified by the past participle of a
 -- verb, by an adverb, or by a relative clause
@@ -247,7 +256,7 @@ concrete NounSom of Noun = CatSom ** open ResSom, Prelude in {
     mod = \\st,n,c => --what to do with subject case if there's both adj and RS?
             cn.mod ! st ! n ! Abs
          ++ andConj st cn.hasMod
-         ++ rs.s ! st ! gennum cn n ! c ;
+         ++ rs.s ! st ! gennum cn Sg ! c ; -- gennum cn Sg, because plural form is only for 1st person plural
     hasMod = True ;
     } ;
 
