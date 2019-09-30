@@ -40,10 +40,10 @@ lin there_Adv = ss "" ;
 -- Conj
 
 lin and_Conj = {s2 = table {Definite => "ee" ; Indefinite => "oo"} ; s1 = [] ; n = Pl} ;
-lin or_Conj = {s2 = \\_ => "ama" ; s1 = [] ; n = Sg} ; -- mise with interrogatives
+lin or_Conj = {s2 = \\_ => "ama" ; s1 = [] ; n = Sg} ; -- mise with interrogatives; Saeed p. 122-123: "Note that the clause introduced by misé has the form of a declarative not an interrogative though the whole sentence is interpreted as a question."
 -- lin if_then_Conj = mkConj
 -- lin both7and_DConj = mkConj "" "" pl ;
--- lin either7or_DConj = mkConj "" "" pl ;
+lin either7or_DConj = {s2 = \\_ => "ama" ; s1 = "ama" ; n = Sg} ;
 --
 -- lin but_PConj = ss "" ;
 -- lin otherwise_PConj = ss "" ;
@@ -68,7 +68,8 @@ lin much_Det = R.indefDet "" sg ;
 -}
 lin somePl_Det = {
     sp = \\_,_ => "qaar" ;
-    isPoss, isNum = False ;
+    isPoss = False ;
+    numtype = NoNum ;
     st = Definite ; -- NB. Indefinite means actually only IndefArt.
     n = Pl ;
     s = \\x,_ => BIND ++ defStems ! x ++ BIND ++ "a qaarkood" ;

@@ -18,8 +18,8 @@ lin
   ComplVV vv vp = let vc = vp.vComp in case vv.vvtype of {
     Waa_In => vp ** {
       vComp = vc ** {subjunc = vv.s ! VInf} ; -- it's always the word "in", and it will be placed before subject pronoun. it's placed in vv.s!VInf so that the VV would contribute with some string. /IL
-      obj2 = vp.obj2 ** {s = []} ;      -- word order hack to avoid more parameters:
-      miscAdv = vp.miscAdv ++ vp.obj2.s -- dump the object to miscAdv
+      obj = vp.obj ** {s = []} ;      -- word order hack to avoid more parameters:
+      miscAdv = vp.miscAdv ++ vp.obj.s -- dump the object to miscAdv
       } ;
 
     Subjunctive => useV vv ** {
@@ -46,7 +46,7 @@ lin
   ComplVS vs s =
     let vps = useV vs ;
         subord = SubjS {s="in"} s ;
-     in vps ** {obj2 = {s = subord.berri ; a = P3_Prep}} ;
+     in vps ** {obj = {s = subord.berri ; a = P3_Prep}} ;
 
 {-
   -- : VQ -> QS -> VP ;
@@ -79,7 +79,7 @@ lin
   -- : V2A -> AP -> VPSlash ;  -- paint (it) red
    -- TODO: is "red" plural in "paint them red"?
   SlashV2A v2a ap = useVc v2a ** {
-    comp = \\_ => (CompAP ap).comp ! Sg3 Masc
+    aComp = \\_ => (CompAP ap).aComp ! Sg3 Masc
   } ;
 
   -- : VPSlash -> NP -> VP
@@ -133,32 +133,36 @@ lin
 
 -- Adjectival phrases, noun phrases, and adverbs can be used.
 
-  -- the house is big
-  -- the houses are big
-  -- I am [a house that sleeps here]
-  -- we are [houses that sleep here]
-
   -- : AP  -> Comp ;
   CompAP ap = {
-    comp = \\a => <[], ap.s ! AF (getNum a) Abs> ;
+    aComp = \\a => ap.s ! AF (getNum a) Abs ;
+    nComp = [] ;
+    compar = ap.compar ;
     stm = Waa Copula ;
     } ;
 
   -- : CN  -> Comp ;
   CompCN cn = {
-    comp = \\a => <[], cn2str Sg Abs cn> ;
+    -- I am [a house that sleeps here] vs.  we are [houses that sleep here]
+    aComp = \\a => cn2str (getNum a) Abs cn ;
+    nComp = [] ;
+    compar = [] ;
     stm = Waa NoCopula ;
     } ;
 
   --  NP  -> Comp ;
   CompNP np = {
-    comp = \\a => <[], np.s ! Abs> ;
+    aComp = \\a => [] ;
+    nComp = np.s ! Abs ;
+    compar = [] ;
     stm = Waa NoCopula ;
     } ;
 
   -- : Adv  -> Comp ;
   CompAdv adv = {
-    comp = \\a => <[], linAdv adv> ;
+    aComp = \\a => linAdv adv ; -- TODO check placement
+    nComp = [] ;
+    compar = [] ;
     stm = Waa Copula ;
     } ;
 

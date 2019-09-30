@@ -6,29 +6,30 @@ concrete QuestionSom of Question = CatSom ** open
 
   lin
   -- : Cl -> QCl ;
-  QuestCl = cl2qcl True;
+  QuestCl = cl2qcl PolarQuestion True;
 
   -- : IP -> VP -> QCl ;
   QuestVP ip vp = -- TODO: if we want to contract baa + subj. pronoun, change ResSom.predVP
     let cls : ClSlash = predVP ip vp ;
+        baan : Str = case ip.contractSTM of {True => "aan" ; _ => "baa aan"} ;
         cl : ClSlash = cls ** {
-                stm = modSTM "baa" cls.stm
+                stm = modSTM "baa" baan cls.stm
         } ;
-     in cl2qcl (notB ip.contractSTM) cl ;
+     in cl2qcl PolarQuestion (notB ip.contractSTM) cl ;
 
   -- : IP -> ClSlash -> QCl ; -- whom does John love
   QuestSlash ip cls =
-    let clsIPFocus = cls ** {
+    let baan : Str = case ip.contractSTM of {True => "aan" ; _ => "baa aan"} ;
+        clsIPFocus = cls ** {
           subj = cls.subj ** {  -- keep old subject pronoun,
                    noun = ip.s ! Nom -- and place IP first.
                  } ;
-          obj2 = cls.obj2 ** { -- move old subject noun before object.
-                   s = cls.subj.noun ++ cls.obj2.s
+          obj = cls.obj ** { -- move old subject noun before object.
+                   s = cls.subj.noun ++ cls.obj.s
                  } ;
-          stm = modSTM "baa" cls.stm
+          stm = modSTM "baa" baan cls.stm
         } ;
      in cl2qclslash (notB ip.contractSTM) clsIPFocus ;
-
 
   -- : IAdv -> Cl -> QCl ;    -- why does John walk
   QuestIAdv iadv cls =
@@ -40,21 +41,16 @@ concrete QuestionSom of Question = CatSom ** open
                                 <_,Pos> => case iadv.contractSTM of {
                                              True => [] ; _ => "baa"}
                                         ++ sbj.pron ++ sbj.noun ;
-                                -- TODO how do negative questions work
-                                -- Information questions are not commonly used in negative forms. When they occur they have the same forms as negative declaratives with focus (7.4.1). There is however a strong tendency to use positive forms, for example by subordinating the clause under a verb with an inherently negative meaning:
-                                -- Maxaad       u   tegi   weydey?
-                                -- what+FOC+you for go:INF failed
-                                -- 'Why didn't you go?' (lit. 'Why did you fail to go?')
                                 _ => case iadv.contractSTM of {
-                                      True => [] ; _ => clRaw.stm ! Question ! p}
+                                      True => [] ; _ => clRaw.stm ! WhQuestion ! p}
                                   ++ sbj.pron ++ sbj.noun } ;
             subj = sbj ** {noun, pron = []}  -- to force subject after baa
         } ;
-     in cl2qcl True cl ; -- True because we handle STM placement in cl.stm
+     in cl2qcl WhQuestion True cl ; -- True because we handle STM placement in cl.stm
 
   -- : IComp -> NP -> QCl ;   -- where is John?
   QuestIComp icomp np =
-    let cls = predVP np (VS.UseComp icomp) ;
+    let cls = predVP np (VS.UseComp (icomp2comp icomp)) ;
         -- cl = cls ** { -- TODO: neg. questions
         --       stm : ClType=>Polarity=>Str = \\_,_ => "waa"
         -- }
@@ -91,15 +87,10 @@ concrete QuestionSom of Question = CatSom ** open
 -- pronouns.
 
   -- : IAdv -> IComp ;
-  CompIAdv iadv = {            -- where (is it)
-    comp = \\_ => <[], iadv.s> ;
-    stm = Waa NoCopula ;
-    } ;
+  CompIAdv iadv = iadv ;            -- where (is it)
+
   -- : IP -> IComp ;
-  CompIP ip = {                -- who (is it)
-    comp = \\_ => <[], ip.s ! Abs> ;
-    stm = Waa NoCopula ;
-    } ;
+  CompIP ip = {s = ip.s ! Abs} ;    -- who (is it)
 
 {-
 -- More $IP$, $IDet$, and $IAdv$ are defined in $Structural$.
@@ -115,5 +106,26 @@ concrete QuestionSom of Question = CatSom ** open
 
     QuestQVP      : IP -> QVP -> QCl ;       -- who buys what where
 -}
+
+oper
+
+  icomp2comp : SS -> Complement = \icomp -> icomp ** {
+    aComp = \\_ => [] ;
+    nComp = icomp.s ;
+    compar = [] ;
+    stm = Waa NoCopula
+  } ;
+
+  -- Question clauses: subject pronoun not included, STM is
+  cl2qcl : ClType -> Bool -> ClSlash -> Clause = \cltyp ->
+    let hasSubjPron : Bool = False ;
+        isRel : Bool = False ;
+     in mkClause cltyp isRel hasSubjPron ;
+
+  -- Question clause with wh-word as object: subject pronoun is included
+  cl2qclslash : Bool -> ClSlash -> Clause =
+    let hasSubjPron : Bool = True ;
+        isRel : Bool = False ;
+     in mkClause PolarQuestion isRel hasSubjPron ;
 
 }
