@@ -486,7 +486,7 @@ resource ResBul = ParamX ** open Prelude, Predef in {
             ASg Masc Def   => (base0+"ия") ;
             ASgMascDefNom  => (base0+"ият") ;
             ASg Fem  Indef => (base0+"а") ;
-            ASg Fem  Def   => (base0+"aтa") ;
+            ASg Fem  Def   => (base0+"ата") ;
             ASg Neut Indef => (base0+"о") ;
             ASg Neut Def   => (base0+"ото") ;
             APl Indef      => (ia2e base0+"и") ;
@@ -613,9 +613,14 @@ resource ResBul = ParamX ** open Prelude, Predef in {
     \vp ->
       let agr = {gn = GSg Neut; p = P1};
           clitic = case vp.vtype of {
-                     VNormal    => {s=[]; agr=agr} ;
-                     VMedial c  => {s=reflClitics ! c; agr=agr} ;
-                     VPhrasal c => {s=personalClitics agr ! c; agr={gn=GSg Neut; p=P3}}
+                     VNormal    => {s=vp.clitics; agr=agr} ;
+                     VMedial  c => {s=vp.clitics++reflClitics ! c; agr=agr} ;
+                     VPhrasal c => {s=case c of {
+                                        Dat => personalClitics agr ! Dat++vp.clitics;
+                                        _   => vp.clitics++personalClitics agr ! c
+                                      };
+                                    agr={gn=GSg Neut; p=P3}
+                                   }
                    } ;
       in vp.ad.s ++
          vp.s ! Imperf ! VPres (numGenNum clitic.agr.gn) clitic.agr.p ++ clitic.s ++
