@@ -1274,7 +1274,7 @@ oper verbDecl: Aspect -> Conjugation -> Str -> Str -> Str -> Str -> Str -> Verbu
 			   Dolzhen => <presentConjDolzhen,pastConjDolzhen> ;
 			   Foreign => <presentConjForeign,pastConj> } in 
        let patt = case a of {
-	            Perfective   => mkVerbImperfective;
+	            Perfective   => mkVerbPerfective;
 		    Imperfective => mkVerbImperfective } in
        patt inf imperSgP2 (conj.p1 del sgP1End) (conj.p2 sgMascPast) ;
 
@@ -1283,14 +1283,14 @@ oper verbDecl: Aspect -> Conjugation -> Str -> Str -> Str -> Str -> Str -> Verbu
 oper verbDeclMoch: Aspect -> Conjugation -> Str -> Str -> Str -> Str ->Str -> Str -> Verbum =
    \a, c, del, sgP1End, sgMascPast, imperSgP2, inf, altRoot -> 
        let patt = case a of {
-	            Perfective   => mkVerbImperfective;
+	            Perfective   => mkVerbPerfective;
 		    Imperfective => mkVerbImperfective } in
         patt inf imperSgP2 (presentConj1Moch del sgP1End altRoot) (pastConj sgMascPast);
 
 oper add_sya : Voice -> Str -> Str = \v,x ->
        case v of {
 	 Act => x ;
-	 Pas => case Predef.dp 2 x of {
+	 Pas => case Predef.dp 1 x of {
                   "а" | "е" | "ё" | "и" | "о" | "у" | "ы" | "э" | "ю" | "я" => x + "сь" ;
 		  _ => x + "ся"
 	   }
@@ -1339,10 +1339,8 @@ oper mkVerbPerfective: Str -> Str -> PresentVerb -> PastVerb -> Verbum =
 
 	 VSUB gn => add_sya vox (past ! (PSF gn)) ++ "бы" ;
 
-	 VIND (GSg _) (VPresent _)  => nonExist ;
-	 VIND GPl     (VPresent P1) => nonExist ;
-	 VIND GPl     (VPresent P2) => nonExist ;
-	 VIND GPl     (VPresent P3) => nonExist ;
+	 VIND (GSg _) (VPresent p)  => (presentFuture ! (PRF (GSg Masc) p)); -- these are not correct,
+	 VIND GPl     (VPresent p)  => (presentFuture ! (PRF GPl p)) ;       -- but used elsewhere
 	 VIND gn      (VFuture p)   => add_sya vox (presentFuture ! (PRF gn p)) ;
 	 VIND gn      VPast         => add_sya vox (past ! (PSF gn))
      } } ;
