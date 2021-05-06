@@ -47,6 +47,7 @@ abstract Extend = Cat ** {
     PredVPS    : NP   -> VPS -> S ;          -- she [has walked and won't sleep]
     SQuestVPS  : NP   -> VPS -> QS ;         -- has she walked
     QuestVPS   : IP   -> VPS -> QS ;         -- who has walked
+    RelVPS     : RP   -> VPS -> RS ;         -- which won't sleep
 
 -- existentials that work in the absence of Cl
     ExistS     : Temp -> Pol -> NP -> S ;    -- there was a party
@@ -69,10 +70,19 @@ abstract Extend = Cat ** {
     MkVPS2    : Temp -> Pol -> VPSlash -> VPS2 ;  -- has loved
     ConjVPS2  : Conj -> [VPS2] -> VPS2 ;          -- has loved and now hates
     ComplVPS2 : VPS2 -> NP -> VPS ;               -- has loved and now hates that person
+    ReflVPS2  : VPS2 -> RNP -> VPS ;              -- have loved and now hate myself and my car
 
     MkVPI2    : VPSlash -> VPI2 ;                 -- to love
     ConjVPI2  : Conj -> [VPI2] -> VPI2 ;          -- to love and hate
     ComplVPI2 : VPI2 -> NP -> VPI ;               -- to love and hate that person
+
+-- Conjunction of copula complements
+  cat [Comp]{2} ;
+  fun ConjComp : Conj -> ListComp -> Comp ;
+
+-- Conjunction of imperatives
+  cat [Imp] {2} ;
+  fun ConjImp : Conj -> ListImp -> Imp ;
 
   fun
     ProDrop : Pron -> Pron ;  -- unstressed subject pronoun becomes empty: "am tired"
@@ -116,6 +126,11 @@ abstract Extend = Cat ** {
 
     ProgrVPSlash : VPSlash -> VPSlash;
 
+-- construct VPSlash from A2 and N2
+
+    A2VPSlash : A2 -> VPSlash ; -- is married to (that person)
+    N2VPSlash : N2 -> VPSlash ; -- is a mother of (that person)
+
 -- existential for mathematics
 
     ExistsNP : NP -> Cl ;  -- there exists a number / there exist numbers
@@ -126,7 +141,7 @@ abstract Extend = Cat ** {
     ExistMassCN   : CN -> Cl ;  -- there is beer / there is no beer
     ExistPluralCN : CN -> Cl ;  -- there are trees / there are no trees
 
--- generalisation of existential, with adverb as a parameter
+-- generalisation of existential, with adverb as an argument
     AdvIsNP : Adv -> NP -> Cl ;  -- here is the tree / here are the trees
     AdvIsNPAP : Adv -> NP -> AP -> Cl ; -- here are the instructions documented
 
@@ -183,6 +198,15 @@ abstract Extend = Cat ** {
     ReflPoss : Num -> CN -> RNP ;      -- my car(s)
 
     PredetRNP : Predet -> RNP -> RNP ; -- all my brothers
+
+    AdvRNP : NP -> Prep -> RNP -> RNP ;   -- a dispute with his wife
+    AdvRVP : VP -> Prep -> RNP -> VP ;    -- lectured about her travels
+    AdvRAP : AP -> Prep -> RNP -> AP ;    -- adamant in his refusal
+
+    ReflA2RNP : A2 -> RNP -> AP ;         -- indifferent to their surroundings
+                                               -- NOTE: generalizes ReflA2
+
+    PossPronRNP : Pron -> Num -> CN -> RNP -> NP ; -- his abandonment of his wife and children
 
     ConjRNP : Conj -> RNPList -> RNP ;  -- my family, John and myself
 
@@ -253,5 +277,14 @@ abstract Extend = Cat ** {
   UttAccIP : IP -> Utt ; -- whom (accusative)
   UttDatIP : IP -> Utt ; -- whom (dative)
 
+
+-- UseDAP replaces DetNP from the RGL which is more limited.
+-- Instead of (DetNP d) use (UseDAP (DetDAP d)). The advantage
+-- is that now we can also have an adjective inserted, i.e.
+-- (UseDAP (AdjDAP (DetDAP d) a). There are also versions of
+-- UseDAP for different genders.
+fun UseDAP     : DAP -> NP ;
+    UseDAPMasc : DAP -> NP ;
+    UseDAPFem  : DAP -> NP ;
 
 }
